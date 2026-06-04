@@ -13,7 +13,8 @@ An autonomous single-axis solar tracking system built with an ESP32 microcontrol
 ## 🎥 Video Presentation
 
 
-> [Watch the project presentation](ESP32 Solar Tracker
+> [Watch the project presentation]
+(ESP32 Solar Tracker
 https://youtube.com/shorts/7Aiz1gepWZc?feature=share)
 
 ---
