@@ -34,7 +34,6 @@
     position:relative; height:5px; margin:6px 0 2px;
     background:#0a1a2a; border:1px solid #1e3a5a; border-radius:3px; overflow:hidden;
   }
-  /* daylight band 06:00–18:00 = 25%..75% of the 24h track */
   .clock-day {
     position:absolute; top:0; bottom:0; left:25%; width:50%;
     background:linear-gradient(90deg,#3a5a2a,#caa83a,#3a5a2a); opacity:.55;
@@ -142,7 +141,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ── SCENE SETUP ────────────────────────────────────────────────────────────
 const scene    = new THREE.Scene();
 const camera   = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(11, 9, 22);
@@ -161,15 +159,12 @@ window.addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
-// ── SKY / FOG ──────────────────────────────────────────────────────────────
-scene.background = new THREE.Color(0x020b18);
-scene.fog = new THREE.Fog(0x020b18, 30, 80);
+scene.background = new THREE.Color(0x0a1f35);
+scene.fog = new THREE.Fog(0x0a1f35, 30, 80);
 
-// ── LIGHTS ─────────────────────────────────────────────────────────────────
 const ambientLight = new THREE.AmbientLight(0x112233, 0.4);
 scene.add(ambientLight);
 
-// Sun light (directional, moves with sun)
 const sunLight = new THREE.DirectionalLight(0xfff5cc, 0);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.set(2048, 2048);
@@ -179,17 +174,14 @@ sunLight.shadow.camera.left = sunLight.shadow.camera.bottom = -20;
 sunLight.shadow.camera.right = sunLight.shadow.camera.top  =  20;
 scene.add(sunLight);
 
-// Hemisphere sky/ground light
 const hemiLight = new THREE.HemisphereLight(0x224466, 0x113311, 0.3);
 scene.add(hemiLight);
 
-// ── SUN SPHERE ─────────────────────────────────────────────────────────────
 const sunGeo  = new THREE.SphereGeometry(0.9, 32, 32);
 const sunMat  = new THREE.MeshBasicMaterial({ color: 0xffd700 });
 const sunMesh = new THREE.Mesh(sunGeo, sunMat);
 scene.add(sunMesh);
 
-// Sun glow sprite
 const glowCanvas = document.createElement('canvas');
 glowCanvas.width = glowCanvas.height = 128;
 const gc = glowCanvas.getContext('2d');
@@ -205,16 +197,13 @@ const glowSprite = new THREE.Sprite(glowMat);
 glowSprite.scale.set(8, 8, 1);
 sunMesh.add(glowSprite);
 
-// ── SUN ARC PATH ───────────────────────────────────────────────────────────
-// Parametric arc the sun travels along. u in [0,1]: 0 = right horizon (sunrise),
-// 0.5 = noon (overhead), 1 = left horizon (sunset).
 const SUN_RADIUS = 22;
 const SUN_PEAK   = 16;
 const SUN_Z      = -15;
 function sunArcPos(u) {
-  const angle = u * Math.PI;          // 0 → π
-  const azimuth   = Math.cos(angle);  // +1 right → -1 left
-  const sunFactor = Math.sin(angle);  // 0 → 1 → 0  (height)
+  const angle = u * Math.PI;
+  const azimuth   = Math.cos(angle);
+  const sunFactor = Math.sin(angle);
   return new THREE.Vector3(
     -azimuth * SUN_RADIUS,
     2 + sunFactor * SUN_PEAK,
@@ -222,7 +211,6 @@ function sunArcPos(u) {
   );
 }
 
-// Visible arc line (dashed)
 const arcPts = [];
 for (let i = 0; i <= 80; i++) arcPts.push(sunArcPos(i / 80));
 const arcGeo = new THREE.BufferGeometry().setFromPoints(arcPts);
@@ -234,7 +222,6 @@ const arcLine = new THREE.Line(arcGeo, arcMat);
 arcLine.computeLineDistances();
 scene.add(arcLine);
 
-// Horizon end markers (sunrise / sunset)
 function marker(pos, color) {
   const m = new THREE.Mesh(
     new THREE.RingGeometry(0.5, 0.7, 24),
@@ -245,10 +232,9 @@ function marker(pos, color) {
   scene.add(m);
   return m;
 }
-marker(sunArcPos(0), 0xff8844);   // sunrise (right)
-marker(sunArcPos(1), 0xff8844);   // sunset (left)
+marker(sunArcPos(0), 0xff8844);
+marker(sunArcPos(1), 0xff8844);
 
-// ── GROUND ─────────────────────────────────────────────────────────────────
 const groundGeo = new THREE.PlaneGeometry(80, 80);
 const groundMat = new THREE.MeshLambertMaterial({ color: 0x0d1f0d });
 const ground    = new THREE.Mesh(groundGeo, groundMat);
@@ -257,7 +243,6 @@ ground.position.y = 0;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// ── HELPERS ────────────────────────────────────────────────────────────────
 function box(w, h, d, color, rough=0.6, metal=0.3) {
   const geo = new THREE.BoxGeometry(w, h, d);
   const mat = new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
@@ -275,117 +260,75 @@ function cyl(rt, rb, h, color, segs=16, rough=0.5, metal=0.5) {
   return m;
 }
 
-// ── POLES ──────────────────────────────────────────────────────────────────
-const POLE_H    = 4.0;
-const POLE_SEP  = 0.5;   // gap between the two poles
-const POLE_RAD  = 0.12;
+// ── DIMENSIONS ─────────────────────────────────────────────────────────────
+const PANEL_W = 4.0;
+const PANEL_H = 2.2;
+const PANEL_D = 0.08;
+const POLE_H  = 4.0;
+const POLE_RAD = 0.12;
 
-const poleGroup = new THREE.Group();
-scene.add(poleGroup);
-
-const poleL = cyl(POLE_RAD, POLE_RAD*1.1, POLE_H, 0x2e4a6a);
-poleL.position.set(-POLE_SEP/2, POLE_H/2, 0);
-poleGroup.add(poleL);
-
-const poleR = cyl(POLE_RAD, POLE_RAD*1.1, POLE_H, 0x2e4a6a);
-poleR.position.set( POLE_SEP/2, POLE_H/2, 0);
-poleGroup.add(poleR);
-
-// cross-brace between poles near top
-const brace = box(POLE_SEP+POLE_RAD*2, POLE_RAD*1.5, POLE_RAD*1.5, 0x3a6a9a);
-brace.position.set(0, POLE_H - 0.3, 0);
-poleGroup.add(brace);
-
-// feet / base plates
-const footL = box(0.7, 0.12, 0.7, 0x1a3a1a, 0.8, 0.1);
-footL.position.set(-POLE_SEP/2, 0.06, 0);
-poleGroup.add(footL);
-const footR = box(0.7, 0.12, 0.7, 0x1a3a1a, 0.8, 0.1);
-footR.position.set( POLE_SEP/2, 0.06, 0);
-poleGroup.add(footR);
-
-// ── STATION NIGHT LIGHTING ──────────────────────────────────────────────────
-// Two lamp posts flank the station. Their bulbs and point lights switch ON at
-// night (sun down) and OFF at sunrise — controlled in the animation loop.
-const stationLights = [];   // { lamp(material), light(PointLight) }
-
+// ── STATION NIGHT LIGHTING ─────────────────────────────────────────────────
+const stationLights = [];
 function lampPost(x) {
   const g = new THREE.Group();
   g.position.set(x, 0, 1.6);
-  // post
   const post = cyl(0.06, 0.07, 3.2, 0x2a3a4a, 10, 0.5, 0.6);
   post.position.y = 1.6;
   g.add(post);
-  // arm reaching toward the station
   const arm = box(0.06, 0.06, 0.9, 0x2a3a4a, 0.5, 0.6);
   arm.position.set(0, 3.1, -0.45);
   g.add(arm);
-  // lamp head (glowing bulb)
   const lampMat = new THREE.MeshStandardMaterial({
     color: 0x332b18, emissive: 0x000000, emissiveIntensity: 1, roughness: 0.4
   });
   const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), lampMat);
   lamp.position.set(0, 3.05, -0.9);
   g.add(lamp);
-  // soft glow sprite around the bulb
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
     map: glowTex, color: 0xffd27a, transparent: true, opacity: 0, depthWrite: false
   }));
   glow.scale.set(2.2, 2.2, 1);
   glow.position.copy(lamp.position);
   g.add(glow);
-  // point light cast from the bulb
   const light = new THREE.PointLight(0xffce85, 0, 14, 2);
   light.position.copy(lamp.position);
   light.castShadow = true;
   light.shadow.mapSize.set(1024, 1024);
   g.add(light);
-
   scene.add(g);
   stationLights.push({ lampMat, glow, light });
 }
 lampPost(-3.2);
 lampPost( 3.2);
 
-// ── PANEL PIVOT GROUP (rotates to track sun) ───────────────────────────────
-// pivot point = top of poles
-// panelTracker rotates on Z to follow the sun's left-right arc.
-// panelPivot is pre-rotated so the panel's +Z face points straight UP at rest.
+// ── PANEL PIVOT GROUP ──────────────────────────────────────────────────────
 const panelTracker = new THREE.Group();
 panelTracker.position.set(0, POLE_H, 0);
 scene.add(panelTracker);
 
 const panelPivot = new THREE.Group();
-panelPivot.rotation.x = -Math.PI / 2;  // tip face from +Z (forward) to +Y (up)
+panelPivot.rotation.x = -Math.PI / 2;
 panelTracker.add(panelPivot);
 
-// mounting bracket stub (connects pivot to panel back)
+// mounting bracket stub
 const stub = cyl(0.08, 0.08, 0.35, 0x2e4a6a);
-stub.rotation.x = Math.PI / 2;  // point forward (Z axis)
+stub.rotation.x = Math.PI / 2;
 stub.position.set(0, 0, 0);
 panelPivot.add(stub);
 
 // ── PANEL FRAME ────────────────────────────────────────────────────────────
-const PANEL_W = 4.0;
-const PANEL_H = 2.2;
-const PANEL_D = 0.08;
-
-// back frame (aluminium)
 const frameBack = box(PANEL_W + 0.14, PANEL_H + 0.14, PANEL_D, 0x2a3a4a, 0.4, 0.7);
 frameBack.position.set(0, 0, -0.18);
 panelPivot.add(frameBack);
 
-// panel face — canvas texture with cells
 const cellCanvas = document.createElement('canvas');
 cellCanvas.width  = 800;
 cellCanvas.height = 440;
 const ctx = cellCanvas.getContext('2d');
 
 function drawCells(brightness) {
-  // background
   ctx.fillStyle = `rgb(10,${18+brightness*8},${35+brightness*15})`;
   ctx.fillRect(0,0,800,440);
-
   const cols = 8, rows = 4;
   const cw = (800 - 20) / cols;
   const ch = (440 - 20) / rows;
@@ -394,23 +337,18 @@ function drawCells(brightness) {
       const x = 10 + c*cw + 2;
       const y = 10 + r*ch + 2;
       const w = cw - 4, h = ch - 4;
-      // cell body
       const b = brightness;
       ctx.fillStyle = `rgb(${12+b*6},${28+b*28},${55+b*45})`;
       ctx.fillRect(x, y, w, h);
-      // cell grid lines (busbars)
       ctx.strokeStyle = `rgba(${80+b*60},${140+b*80},${200+b*55},${0.3+b*0.4})`;
       ctx.lineWidth = 0.8;
-      // horizontal busbar
       ctx.beginPath(); ctx.moveTo(x, y+h/2); ctx.lineTo(x+w, y+h/2); ctx.stroke();
-      // vertical finger lines
       for (let i=1; i<6; i++) {
         ctx.beginPath();
         ctx.moveTo(x + w*i/6, y);
         ctx.lineTo(x + w*i/6, y+h);
         ctx.stroke();
       }
-      // shimmer highlight
       if (b > 0.1) {
         const g = ctx.createLinearGradient(x, y, x+w, y+h);
         g.addColorStop(0,   `rgba(120,200,255,0)`);
@@ -421,7 +359,6 @@ function drawCells(brightness) {
       }
     }
   }
-  // outer border
   ctx.strokeStyle = `rgb(30,${60+brightness*30},${95+brightness*40})`;
   ctx.lineWidth = 6;
   ctx.strokeRect(3, 3, 794, 434);
@@ -430,15 +367,13 @@ function drawCells(brightness) {
 drawCells(0);
 const cellTex  = new THREE.CanvasTexture(cellCanvas);
 const panelGeo = new THREE.BoxGeometry(PANEL_W, PANEL_H, PANEL_D);
-
-// Multi-material: front face gets the cell texture
 const panelMats = [
-  new THREE.MeshStandardMaterial({ color:0x1a2a3a, roughness:0.5, metalness:0.6 }), // right
-  new THREE.MeshStandardMaterial({ color:0x1a2a3a, roughness:0.5, metalness:0.6 }), // left
-  new THREE.MeshStandardMaterial({ color:0x1a2a3a, roughness:0.5, metalness:0.6 }), // top
-  new THREE.MeshStandardMaterial({ color:0x1a2a3a, roughness:0.5, metalness:0.6 }), // bottom
-  new THREE.MeshStandardMaterial({ map: cellTex,   roughness:0.2, metalness:0.1 }), // front (+Z)
-  new THREE.MeshStandardMaterial({ color:0x0a1020, roughness:0.8, metalness:0.2 }), // back
+  new THREE.MeshStandardMaterial({ color:0x1a2a3a, roughness:0.5, metalness:0.6 }),
+  new THREE.MeshStandardMaterial({ color:0x1a2a3a, roughness:0.5, metalness:0.6 }),
+  new THREE.MeshStandardMaterial({ color:0x1a2a3a, roughness:0.5, metalness:0.6 }),
+  new THREE.MeshStandardMaterial({ color:0x1a2a3a, roughness:0.5, metalness:0.6 }),
+  new THREE.MeshStandardMaterial({ map: cellTex,   roughness:0.2, metalness:0.1 }),
+  new THREE.MeshStandardMaterial({ color:0x0a1020, roughness:0.8, metalness:0.2 }),
 ];
 const panelMesh = new THREE.Mesh(panelGeo, panelMats);
 panelMesh.position.set(0, 0, 0);
@@ -446,7 +381,6 @@ panelMesh.castShadow = true;
 panelMesh.receiveShadow = true;
 panelPivot.add(panelMesh);
 
-// thin edge trim
 const trimTop = box(PANEL_W+0.04, 0.1, PANEL_D+0.02, 0x3a5a7a, 0.3, 0.8);
 trimTop.position.set(0, PANEL_H/2+0.05, 0);
 panelPivot.add(trimTop);
@@ -460,63 +394,74 @@ const trimR = box(0.1, PANEL_H+0.24, PANEL_D+0.02, 0x3a5a7a, 0.3, 0.8);
 trimR.position.set(PANEL_W/2+0.05, 0, 0);
 panelPivot.add(trimR);
 
-// pivot pin visible
-const pin = cyl(0.1, 0.1, POLE_SEP*2+0.4, 0x4a8aaa, 12, 0.2, 0.9);
+// pivot pin
+const pin = cyl(0.1, 0.1, PANEL_W+0.6, 0x4a8aaa, 12, 0.2, 0.9);
 pin.rotation.z = Math.PI/2;
 pin.position.set(0, 0, 0);
 panelPivot.add(pin);
 
-// ── LDR SENSORS + SHADING FIN ──────────────────────────────────────────────
-// Two light-dependent resistors mounted on the panel's aluminium FRAME — on the
-// left and right edge rails, just outside the cell area. A central shading fin
-// between them shadows one sensor when the panel is mis-aimed; that difference
-// is what the controller nulls. (Children of panelPivot, so they tilt with the
-// panel. In panelPivot local space the face points +Z, panel spans X.)
-const FRAME_X  = PANEL_W/2 + 0.05;     // x of the left/right trim rails
-const FRAME_FZ = (PANEL_D + 0.02)/2;   // front surface of the trim rails
+// ── LEGS — children of panelPivot, rotate with panel ──────────────────────
+// Positioned at the panel's left and right edges (±PANEL_W/2).
+// In panelPivot local space, -Y is downward toward the ground.
+// Each leg length = POLE_H so the foot reaches ground when panel is at rest.
+[-PANEL_W/2, PANEL_W/2].forEach(xPos => {
+  const legGroup = new THREE.Group();
+  legGroup.position.set(0, 0, xPos);
+
+  // pole — centred between pivot and ground
+  const pole = cyl(POLE_RAD, POLE_RAD * 1.1, POLE_H, 0x2e4a6a);
+  pole.position.set(0, POLE_H / 2, 0);
+  legGroup.add(pole);
+
+  // foot base plate at ground level
+  const foot = box(0.7, 0.12, 0.7, 0x1a3a1a, 0.8, 0.1);
+  foot.position.set(0, 0.06, 0);
+  legGroup.add(foot);
+
+  scene.add(legGroup);
+});
+
+// ── LDR SENSORS + SHADING FIN ─────────────────────────────────────────────
+const FRAME_X  = PANEL_W/2 + 0.05;
+const FRAME_FZ = (PANEL_D + 0.02)/2;
 
 function ldr(color) {
   const m = new THREE.Mesh(
     new THREE.CylinderGeometry(0.12, 0.12, 0.08, 20),
     new THREE.MeshStandardMaterial({ color, emissive:0x000000, roughness:0.4, metalness:0.3 })
   );
-  m.rotation.x = Math.PI/2;          // face out along +Z
+  m.rotation.x = Math.PI/2;
   m.castShadow = true;
   return m;
 }
-const ldrLeft  = ldr(0x882222);      // mounted on the LEFT frame rail (−X edge)
+const ldrLeft  = ldr(0x882222);
 ldrLeft.position.set(-FRAME_X, 0, FRAME_FZ + 0.05);
 panelPivot.add(ldrLeft);
 
-const ldrRight = ldr(0x882222);      // mounted on the RIGHT frame rail (+X edge)
+const ldrRight = ldr(0x882222);
 ldrRight.position.set(FRAME_X, 0, FRAME_FZ + 0.05);
 panelPivot.add(ldrRight);
 
-// central shading fin standing up off the panel face between the two LDRs
 const fin = box(0.06, 1.2, 0.5, 0x111820, 0.7, 0.2);
-fin.rotation.x = Math.PI/2;          // stand it up off the +Z face
+fin.rotation.x = Math.PI/2;
 fin.position.set(0, 0, PANEL_D/2 + 0.28);
 panelPivot.add(fin);
 
-// ── PANEL REFERENCE POSITIONS (start / end) ────────────────────────────────
-// Compute the tracker Z-rotation that aims the panel at the sun for a given u.
+// ── REFERENCE POSITIONS ────────────────────────────────────────────────────
 const PIVOT_POS = new THREE.Vector3(0, POLE_H, 0);
 function aimAngleForU(u) {
   const toSun = sunArcPos(u).clone().sub(PIVOT_POS).normalize();
   return Math.atan2(-toSun.x, toSun.y);
 }
-const START_ANGLE = aimAngleForU(0.04); // just after sunrise (right)
-const END_ANGLE   = aimAngleForU(0.96); // just before sunset (left)
+const START_ANGLE = aimAngleForU(0.04);
+const END_ANGLE   = aimAngleForU(0.96);
 
-// A flat wireframe outline of the panel, placed at a fixed reference angle.
 function refPanel(angleZ, color) {
   const g = new THREE.Group();
   g.position.copy(PIVOT_POS);
   g.rotation.z = angleZ;
-
-  // outline rectangle (panel lies in local X-Z plane after the -90° tilt)
   const inner = new THREE.Group();
-  inner.rotation.x = -Math.PI / 2; // match panel's pre-tilt so it faces "up" locally
+  inner.rotation.x = -Math.PI / 2;
   const hw = (PANEL_W + 0.14) / 2, hh = (PANEL_H + 0.14) / 2;
   const pts = [
     new THREE.Vector3(-hw,-hh,0), new THREE.Vector3( hw,-hh,0),
@@ -530,10 +475,9 @@ function refPanel(angleZ, color) {
   scene.add(g);
   return g;
 }
-refPanel(START_ANGLE, 0x44ddff); // START reference (cyan)
-refPanel(END_ANGLE,   0xffaa44); // END reference (amber)
+refPanel(START_ANGLE, 0x44ddff);
+refPanel(END_ANGLE,   0xffaa44);
 
-// Text label sprite helper
 function textLabel(text, color, pos) {
   const c = document.createElement('canvas');
   c.width = 256; c.height = 64;
@@ -550,22 +494,16 @@ function textLabel(text, color, pos) {
   scene.add(spr);
   return spr;
 }
-// place labels just beyond each reference panel's outer edge
 function refLabelPos(angleZ, dist) {
-  // panel normal direction in X-Y plane, pushed out from pivot
   return new THREE.Vector3(-Math.sin(angleZ)*dist, Math.cos(angleZ)*dist, 0).add(PIVOT_POS);
 }
-textLabel('START', '#44ddff', refLabelPos(START_ANGLE, 3.0));
-textLabel('END',   '#ffaa44', refLabelPos(END_ANGLE,   3.0));
 
-// Angle arc indicator at the pivot, spanning START→END sweep
 (function drawSweepArc() {
   const r = 1.4;
   const segs = 48;
   const pts = [];
   for (let i = 0; i <= segs; i++) {
     const a = START_ANGLE + (END_ANGLE - START_ANGLE) * (i / segs);
-    // local +Y rotated by a, in the X-Y plane at the pivot
     pts.push(new THREE.Vector3(-Math.sin(a)*r, Math.cos(a)*r, 0).add(PIVOT_POS));
   }
   const g = new THREE.BufferGeometry().setFromPoints(pts);
@@ -575,7 +513,7 @@ textLabel('END',   '#ffaa44', refLabelPos(END_ANGLE,   3.0));
   scene.add(line);
 })();
 
-// ── STARS (points) ─────────────────────────────────────────────────────────
+// ── STARS ──────────────────────────────────────────────────────────────────
 const starCount = 800;
 const starPositions = new Float32Array(starCount * 3);
 for (let i=0; i<starCount; i++) {
@@ -593,7 +531,7 @@ scene.add(new THREE.Points(starGeo, starMat));
 
 // ── ANIMATION LOOP ─────────────────────────────────────────────────────────
 const CYCLE = 12000;
-const NIGHT_DWELL = 6000;  // ms the sun stays down so the panel can return to 0°
+const NIGHT_DWELL = 6000;
 const watts = document.getElementById('watt-val');
 const volts = document.getElementById('volt-val');
 const eff   = document.getElementById('eff-val');
@@ -608,15 +546,12 @@ const clockPhase  = document.getElementById('clockPhase');
 const clockMarker = document.getElementById('clockMarker');
 let lastBrightness = -1;
 let currentAngle = 0;
-// Closed-loop tracker state (the motor's actual shaft position persists)
-const PARK = 90 * Math.PI / 180;   // start/park position: 0° from horizontal (vertical panel)
-let panelZ     = PARK;    // current panel angle (radians) — motor shaft position
-let sensorL    = 0;       // left LDR reading  (0..1)
-let sensorR    = 0;       // right LDR reading (0..1)
-let sensorDiff = 0;       // R − L difference the controller acts on
-let motorDir   = 0;       // -1 CCW, 0 hold, +1 CW
-
-// Sun parameter along the arc (0..1). Auto-advances unless the user drags it.
+const PARK = 90 * Math.PI / 180;
+let panelZ     = PARK;
+let sensorL    = 0;
+let sensorR    = 0;
+let sensorDiff = 0;
+let motorDir   = 0;
 let sunU      = 0.0;
 let isDragging = false;
 let autoPlay   = true;
@@ -625,60 +560,41 @@ let autoStartTime = Date.now();
 function animate() {
   requestAnimationFrame(animate);
 
-  // Advance sun automatically when not being dragged.
-  // Each day runs 0→1 over CYCLE ms, then the sun stays down for NIGHT_DWELL ms
-  // so the motor has time to slew the panel back to its 0° start position
-  // before the next sunrise begins.
-  //
-  // CLOCK MODEL (24h day): sunrise 06:00, noon 12:00, sunset 18:00.
-  //   daytime  (sunU 0→1)        → 06:00 → 18:00  (12 daylight hours)
-  //   night    (dwell)           → 18:00 → 06:00  (12 night hours)
   let clockHours;
   if (autoPlay && !isDragging) {
     const period  = CYCLE + NIGHT_DWELL;
     const elapsed = (Date.now() - autoStartTime) % period;
     if (elapsed < CYCLE) {
-      sunU = elapsed / CYCLE;                  // daytime: sun arcs across
-      clockHours = 6 + sunU * 12;              // 06:00 → 18:00
+      sunU = elapsed / CYCLE;
+      clockHours = 6 + sunU * 12;
     } else {
-      sunU = 1.0;                              // night dwell: sun below horizon
-      const nightFrac = (elapsed - CYCLE) / NIGHT_DWELL; // 0→1 across the night
-      clockHours = (18 + nightFrac * 12) % 24; // 18:00 → 24:00 → 06:00
+      sunU = 1.0;
+      const nightFrac = (elapsed - CYCLE) / NIGHT_DWELL;
+      clockHours = (18 + nightFrac * 12) % 24;
     }
   } else {
-    // Dragging / paused: derive the clock straight from the sun's arc position.
     clockHours = 6 + sunU * 12;
   }
 
   const angle      = sunU * Math.PI;
-  const sunFactor  = Math.max(0, Math.sin(angle));   // height 0→1→0
-  const azimuth    = Math.cos(angle);                // +1 right → -1 left
+  const sunFactor  = Math.max(0, Math.sin(angle));
+  const azimuth    = Math.cos(angle);
 
-  // Sun position from arc path
   const sunPos = sunArcPos(sunU);
   sunMesh.position.copy(sunPos);
-
-  // Sun light follows sun
   sunLight.position.copy(sunMesh.position);
   sunLight.intensity = sunFactor * 2.2;
   const sunColorHot  = new THREE.Color(0xfff5cc);
   const sunColorCool = new THREE.Color(0xff8833);
   sunLight.color.lerpColors(sunColorCool, sunColorHot, sunFactor);
-
-  // Ambient / hemi shift with time of day
   ambientLight.intensity = 0.15 + sunFactor * 0.35;
   hemiLight.intensity    = 0.1  + sunFactor * 0.4;
-
-  // Sky colour
-  const nightCol = new THREE.Color(0x020b18);
-  const dayCol   = new THREE.Color(0x0a2a50);
+  const nightCol = new THREE.Color(0x0a1f35);
+  const dayCol   = new THREE.Color(0x1a4a7a);
   scene.background.lerpColors(nightCol, dayCol, sunFactor * 0.8);
   scene.fog.color.copy(scene.background);
 
-  // ── STATION NIGHT LIGHTS ──────────────────────────────────────────────────
-  // ON when the sun is down, OFF in daylight. Fade across dawn/dusk so the
-  // switch isn't abrupt: fully lit below ~horizon glow, off once the sun climbs.
-  const nightLevel = THREE.MathUtils.clamp(1 - sunFactor / 0.12, 0, 1); // 1 at night → 0 in day
+  const nightLevel = THREE.MathUtils.clamp(1 - sunFactor / 0.12, 0, 1);
   stationLights.forEach(({ lampMat, glow, light }) => {
     lampMat.emissive.setHex(0xffce85);
     lampMat.emissiveIntensity = nightLevel;
@@ -686,79 +602,49 @@ function animate() {
     light.intensity = 2.4 * nightLevel;
   });
 
-  // ── CLOSED-LOOP LDR TRACKING (simulates ESP32 + 2×LDR + stepper) ──────────
-  // The controller NEVER knows the sun's true position. It only reads two light
-  // sensors and steps the motor to equalise them. We model what each LDR sees.
   const toSun = new THREE.Vector3().copy(sunMesh.position).sub(panelTracker.position).normalize();
   let alignment = 0;
-
-  // The angle that would perfectly face the sun (used ONLY to model the optics,
-  // not by the controller):
   const idealAngle = Math.atan2(-toSun.x, toSun.y);
 
   if (sunFactor > 0.02) {
-    // error = how far the panel currently points from the sun (radians)
     const err = idealAngle - panelZ;
-
-    // Base light on the face: cosine of incidence angle (Lambert), times sun height.
-    const incidence = Math.cos(err);             // 1 = square-on
+    const incidence = Math.cos(err);
     const baseLight = Math.max(0, incidence) * sunFactor;
-
-    // The central fin shadows whichever sensor is on the "shaded" side when the
-    // panel is mis-aimed. A positive err means the sun is off to one side, so
-    // that side's sensor gets MORE light and the other is partly shadowed.
-    // shadow grows with |err| until the fin fully shades one sensor.
-    const shadow = Math.min(1, Math.abs(err) * 2.2);   // 0..1
-    const noise  = () => (Math.random() - 0.5) * 0.015; // sensor noise
-
+    const shadow = Math.min(1, Math.abs(err) * 2.2);
+    const noise  = () => (Math.random() - 0.5) * 0.015;
     let ldrL = baseLight * (1 - (err > 0 ? shadow : 0)) + noise();
     let ldrR = baseLight * (1 - (err < 0 ? shadow : 0)) + noise();
     ldrL = Math.max(0, ldrL);
     ldrR = Math.max(0, ldrR);
-
-    // Controller: compare the two readings against a deadband (hysteresis).
     const diff = ldrR - ldrL;
-    const DEADBAND = 0.01;     // ESP32 won't react to tiny differences
-    const STEP     = 0.9 * Math.PI / 180;  // one motor step ≈ 0.9° (per frame budget)
-
-    if (sunFactor > 0.04) {    // only drive the motor when there's usable light
-      if (diff >  DEADBAND)      { panelZ += STEP; motorDir = 1;  }  // brighter on right
-      else if (diff < -DEADBAND) { panelZ -= STEP; motorDir = -1; }  // brighter on left
-      else                       { motorDir = 0; }                   // within deadband → hold
+    const DEADBAND = 0.01;
+    const STEP     = 0.9 * Math.PI / 180;
+    if (sunFactor > 0.04) {
+      if (diff >  DEADBAND)      { panelZ += STEP; motorDir = 1;  }
+      else if (diff < -DEADBAND) { panelZ -= STEP; motorDir = -1; }
+      else                       { motorDir = 0; }
     } else { motorDir = 0; }
-
-    // expose sensor values + state for the HUD
     sensorL = ldrL; sensorR = ldrR; sensorDiff = diff;
-
-    // colour the LDR meshes by how much light they receive
     ldrLeft.material.emissive.setRGB(ldrL*0.9, ldrL*0.5, 0);
     ldrRight.material.emissive.setRGB(ldrR*0.9, ldrR*0.5, 0);
-
-    // true alignment for the power/tracking readout
     alignment = Math.max(0, Math.cos(idealAngle - panelZ));
   } else {
-    // NIGHT: no usable light. The controller parks the panel at its start
-    // position — 0° (vertical, facing the sunrise horizon) — ready to pick up
-    // the next sunrise. The motor slews back at its normal step rate.
     sensorL = sensorR = 0; sensorDiff = 0;
     ldrLeft.material.emissive.setRGB(0,0,0);
     ldrRight.material.emissive.setRGB(0,0,0);
-
-    const STEP     = 0.9 * Math.PI / 180;  // same step rate as tracking
+    const STEP = 0.9 * Math.PI / 180;
     if (Math.abs(panelZ - PARK) > STEP) {
-      panelZ += (panelZ > PARK ? -STEP : STEP);  // step toward park
+      panelZ += (panelZ > PARK ? -STEP : STEP);
       motorDir = (panelZ > PARK ? -1 : 1);
     } else {
-      panelZ = PARK;                       // snapped to start position
+      panelZ = PARK;
       motorDir = 0;
     }
   }
 
-  // Apply the motor's actual shaft position to the panel
   panelTracker.rotation.z = panelZ;
   currentAngle = panelZ;
 
-  // Update cell texture periodically
   const brightness = Math.round(sunFactor * 10) / 10;
   if (Math.abs(brightness - lastBrightness) > 0.05) {
     drawCells(brightness);
@@ -766,23 +652,16 @@ function animate() {
     lastBrightness = brightness;
   }
 
-  // Stats
-  // Output scales with both sun height and how squarely the panel faces it.
-  // Perfect tracking keeps alignment ≈ 1, so efficiency stays high all day.
-  const capture = sunFactor * alignment;            // effective irradiance captured
+  const capture = sunFactor * alignment;
   const w = capture > 0.005 ? Math.round(capture * 1200) : 0;
   const v = capture > 0.005 ? Math.round(200 + capture * 100) : 0;
-  // Tracking reflects how squarely the panel faces the sun: 100% = perfectly aimed.
   const e = sunFactor > 0.01 ? Math.round(100 * alignment) : 0;
   watts.textContent = w ? `${w} W` : '— W';
   volts.textContent = v ? `${v} V` : '— V';
   eff.textContent   = e ? `${e}%`  : '—%';
-  // Panel angle measured from horizontal: 90° = flat/facing straight up (rest),
-  // tilts away from 90 toward whichever horizon the sun is on.
   const angDeg = Math.round(90 - currentAngle * 180 / Math.PI);
   angVal.textContent = `${angDeg}°`;
 
-  // ── SENSOR HUD ────────────────────────────────────────────────────────────
   barL.style.width = `${Math.min(100, sensorL * 100)}%`;
   barR.style.width = `${Math.min(100, sensorR * 100)}%`;
   valL.textContent = sensorL.toFixed(2);
@@ -790,13 +669,10 @@ function animate() {
   const col = capture > 0.5 ? '#00ff88' : capture > 0.01 ? '#00e5ff' : '#4a7a9a';
   [watts,volts,eff].forEach(el => el.style.color = col);
 
-  // ── CLOCK / TIME-LAPSE ────────────────────────────────────────────────────
   const hh = Math.floor(clockHours) % 24;
   const mm = Math.floor((clockHours - Math.floor(clockHours)) * 60);
   clockTime.textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
-  // marker position across the 24h track
   clockMarker.style.left = `${(clockHours / 24) * 100}%`;
-  // phase label
   let phase;
   if      (clockHours < 5.5 || clockHours >= 18.5) phase = 'NIGHT';
   else if (clockHours < 7)                          phase = 'SUNRISE';
@@ -806,8 +682,6 @@ function animate() {
   else                                              phase = 'SUNSET';
   clockPhase.textContent = phase;
   clockTime.style.color = sunFactor > 0.05 ? '#cfe6ff' : '#5a7a9a';
-
-  // Title glow
   if (sunFactor > 0.4) {
     title.style.color      = '#00aadd';
     title.style.textShadow = '0 0 20px rgba(0,170,221,0.4)';
@@ -821,8 +695,6 @@ function animate() {
 animate();
 
 // ── DRAG INTERACTION ───────────────────────────────────────────────────────
-// Click/touch near the sun to grab it, then move left↔right to set the time of
-// day. The panel re-aims automatically every frame from sunU.
 const raycaster = new THREE.Raycaster();
 const pointer   = new THREE.Vector2();
 
@@ -833,7 +705,6 @@ function setPointer(e) {
   pointer.y = -(y / innerHeight) * 2 + 1;
 }
 
-// Map a screen pointer to the nearest u on the arc by sampling.
 function pointerToU() {
   raycaster.setFromCamera(pointer, camera);
   const ray = raycaster.ray;
@@ -850,7 +721,6 @@ function pointerToU() {
 function onDown(e) {
   setPointer(e);
   raycaster.setFromCamera(pointer, camera);
-  // generous hit sphere around the sun
   const hit = raycaster.ray.distanceToPoint(sunMesh.position) < 3.0;
   if (hit) {
     isDragging = true;
@@ -866,7 +736,6 @@ function onMove(e) {
     sunU = pointerToU();
     e.preventDefault();
   } else {
-    // hover cursor feedback
     setPointer(e);
     raycaster.setFromCamera(pointer, camera);
     const near = raycaster.ray.distanceToPoint(sunMesh.position) < 3.0;
@@ -885,10 +754,9 @@ renderer.domElement.addEventListener('touchstart', onDown, { passive:false });
 window.addEventListener('touchmove', onMove, { passive:false });
 window.addEventListener('touchend',  onUp);
 
-// Resume auto-play button
 resumeBtn.addEventListener('click', () => {
   autoPlay = true;
-  autoStartTime = Date.now() - sunU * CYCLE; // continue smoothly from current position
+  autoStartTime = Date.now() - sunU * CYCLE;
 });
 </script>
 </body>
