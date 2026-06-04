@@ -2,22 +2,28 @@
 
 An autonomous single-axis solar tracking system built with an ESP32 microcontroller. The system continuously monitors sunlight direction using two LDR sensors and drives a stepper motor to rotate the solar panel toward the brightest light source — maximising solar energy absorption throughout the day.
 
----
+-----
+
+## 🎮 Live Simulation
+
+👉 [**View Panel Animation Simulation**](https://ericdolo.github.io/ESP32-Solar-Tracker/panel-animation.html)
+
+-----
 
 ## 📸 Project Photos
 
-> _Add your photos here by dragging them into the GitHub repository_
+<p float="left">
+  <img src="IMG_0506.jpeg" width="48%" />
+  <img src="IMG_0505.jpeg" width="48%" />
+</p>
 
----
+-----
 
 ## 🎥 Video Presentation
 
+👉 [**Watch the project presentation on YouTube**](https://youtube.com/shorts/7Aiz1gepWZc?feature=share)
 
-> [Watch the project presentation]
-(ESP32 Solar Tracker
-https://youtube.com/shorts/7Aiz1gepWZc?feature=share)
-
----
+-----
 
 ## 🔧 How It Works
 
@@ -29,22 +35,22 @@ Two LDR (Light Dependent Resistor) sensors are positioned on either side of the 
 
 This closed-loop feedback system ensures the panel is always angled toward the strongest light source.
 
----
+-----
 
 ## 🛠️ Components Used
 
-| Component | Description |
-|---|---|
-| ESP32 Dev Board | Microcontroller — handles sensor reading and motor control logic |
-| Stepper Motor | Rotates the solar panel on a single axis (left/right) |
-| Motor Driver Module | Controls stepper motor direction and steps |
-| 2x LDR Sensors | Detect light intensity on either side of the panel |
-| 2x Resistors | Form voltage dividers with LDRs for analog readings |
-| Solar Panel | The load being positioned |
-| Breadboard & Jumper Wires | Prototyping connections |
-| Power Supply | Powers the ESP32 and motor driver |
+|Component                |Description                                                     |
+|-------------------------|----------------------------------------------------------------|
+|ESP32 Dev Board          |Microcontroller — handles sensor reading and motor control logic|
+|Stepper Motor            |Rotates the solar panel on a single axis (left/right)           |
+|Motor Driver Module      |Controls stepper motor direction and steps                      |
+|2x LDR Sensors           |Detect light intensity on either side of the panel              |
+|2x Resistors             |Form voltage dividers with LDRs for analog readings             |
+|Solar Panel              |The load being positioned                                       |
+|Breadboard & Jumper Wires|Prototyping connections                                         |
+|Power Supply             |Powers the ESP32 and motor driver                               |
 
----
+-----
 
 ## ⚙️ System Architecture
 
@@ -55,12 +61,12 @@ This closed-loop feedback system ensures the panel is always angled toward the s
 ```
 
 1. ESP32 reads analog voltage from both LDR sensors
-2. Compares the two readings
-3. Sends step and direction signals to the motor driver
-4. Motor driver drives the stepper motor accordingly
-5. Loop repeats continuously in real time
+1. Compares the two readings
+1. Sends step and direction signals to the motor driver
+1. Motor driver drives the stepper motor accordingly
+1. Loop repeats continuously in real time
 
----
+-----
 
 ## 💡 Key Concepts Demonstrated
 
@@ -71,16 +77,16 @@ This closed-loop feedback system ensures the panel is always angled toward the s
 - **Hardware-software integration** — physical components responding to live sensor data
 - **Renewable energy application** — practical use case in solar optimisation
 
----
+-----
 
 ## 📚 Background
 
 This project was developed as part of my studies in Computer Systems Engineering at Tshwane University of Technology (TUT). It was presented to lecturers as a practical demonstration of embedded systems concepts including microcontroller programming, sensor interfacing, and motor control.
 
----
+-----
 
 ## 👤 Author
 
 **Eric Dolo**  
 Computer Systems Engineering — TUT  
-[LinkedIn](https://www.linkedin.com/in/eric-dolo) | Doloeric37@gmail.com
+[LinkedIn](https://www.linkedin.com/in/eric-dolo) | [Doloeric37@gmail.com](mailto:Doloeric37@gmail.com)
